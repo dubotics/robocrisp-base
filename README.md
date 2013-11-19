@@ -30,3 +30,4 @@ Therefore, each of the three client-side programs can be written in whatever pro
 (add your name here if you want to test that you can commit to the repo)
 
 -   Michael Lee (michael0x2a)
+-   Beck Pang (Beck-Sisyphus)
