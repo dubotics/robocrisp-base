@@ -25,9 +25,8 @@ Each of the three client-side programs (robot control, video feed, wifi cannon) 
 
 Therefore, each of the three client-side programs can be written in whatever programming language is most suitable, so long as they're able to talk to the server.
 
-## Contributors 
-
-(add your name here if you want to test that you can commit to the repo)
+## Contributors
 
 -   Michael Lee (michael0x2a)
 -   Beck Pang (Beck-Sisyphus)
+-   Collin J. Sutton (insaneinside)
