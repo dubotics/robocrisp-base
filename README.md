@@ -1,4 +1,4 @@
-# robocrisp-base
+	# robocrisp-base
 
 The code for the computer/client-side portion of the robocrisp robot
 
@@ -30,3 +30,4 @@ Therefore, each of the three client-side programs can be written in whatever pro
 -   Michael Lee (michael0x2a)
 -   Beck Pang (Beck-Sisyphus)
 -   Collin J. Sutton (insaneinside)
+-   Kim Lum (kjlum)
