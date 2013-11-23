@@ -28,6 +28,6 @@ Therefore, each of the three client-side programs can be written in whatever pro
 ## Contributors
 
 -   Michael Lee (michael0x2a)
--   Beck Pang (Beck-Sisyphus)
+-   Beck Pang (Beck-Sisyphus) let me change again on Linux
 -   Collin J. Sutton (insaneinside)
 -   Kim Lum (kjlum)
