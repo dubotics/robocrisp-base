@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+if ARGV.length < 1
+  puts "Usage: #{$0} REMOTE_IP [PORT]"
+  exit(1)
+end
+
+# Extract the parameters
+remote_ip = ARGV[0]
+control_port = ARGV.length > 1 ? ARGV[1].to_i : 3330
+camera_port = 3333
+
+$: << File.expand_path('../../lib', __FILE__)
+
+$stderr.print('Loading libraries... ') if caller[0].nil?
+require('proxy')
+require('crispcam')
+$stderr.puts('done.') if caller[0].nil?
+
+cli = Proxy::Client.new(TCPSocket, remote_ip, control_port)
+cli.verbose = true
+cam = cli['camera']
+
+# Fetch the local IP to which the camera's stream should be sent.
+local_ip = 
+  begin
+    # orig_sdnrl, Socket.do_no_reverse_lookup = Socket.do_no_reverse_lookup, true
+    ip = UDPSocket.open { |s| s.connect(remote_ip, 1); s.addr.last }
+    # Socket.do_no_reverse_lookup = orig_sdnrl
+    ip
+  end
+
+$stderr.puts("Local IP is #{local_ip}.")
+sink_thread = Thread.new do
+  Signal.trap(:INT, Proc.new do
+                 cam.stop()
+                 cli.close()
+                 Thread.exit()
+               end)
+  CrispCam::Sink.new.run(camera_port)
+end
+
+sleep(0.5)                      # Need the sink running before starting the stream.
+
+begin
+  cam.stop() if cam.running?
+
+  # Set up our parameters.
+  cam.width = 1024
+  cam.height = 768
+
+  cam.fps = 25
+  cam.bitrate = 2048000
+  cam.exposure = 'auto'
+  cam.metering = 'matrix'
+
+  # Start the source (cam), and wait for the sink thread to finish.
+  cam.start(local_ip, camera_port)
+  sink_thread.join()
+ensure
+  cam.stop()
+end

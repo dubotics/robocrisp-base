@@ -1,0 +1,34 @@
+#!/usr/bin/env ruby
+
+lib_path = File.expand_path('../../lib', __FILE__)
+$: << lib_path if not $:.include?(lib_path)
+
+$stderr.print('Loading libraries... ') if caller[0].nil?
+
+require('proxy')
+require('crispcam')
+
+$stderr.puts('done.') if caller[0].nil?
+
+
+server = Proxy::Server.new(TCPServer, 3330)
+server.verbose = true if ARGV.include?('-v')
+server.add('camera', proc { $cam_source })
+
+$cam_source = nil
+server.on_client_connect do
+  $cam_source = CRISPCam::Source.new
+end
+server.on_client_disconnect do
+  $cam_source.stop() if not $cam_source.nil?
+end
+
+FlyTrap.trap(:INT, Proc.new { Kernel.exit })
+FlyTrap.trap(:QUIT, Proc.new { Kernel.abort })
+
+begin
+  server.run                    # start the server thread
+  server.wait                   # wait for that thread to finish
+ensure
+  $cam_source.stop if not $cam_source.nil?
+end
