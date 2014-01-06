@@ -65,7 +65,7 @@ print_rgb(FILE* fp, const ModuleControl& mc)
     fprintf(fp, " \033[1;34m%d\033[0m", dv->get<uint8_t>());
 }
 
-#include "gnublin.h"
+#include "gnublin_i2c.hpp"
 
 static int
 run_server(boost::asio::io_service& service,
