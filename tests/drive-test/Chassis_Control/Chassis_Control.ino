@@ -3,7 +3,8 @@
 #include <map>
 #include <string>
 
-#include "C:\Users\Taylor\Documents\Arduino\libraries\ChassisData.h" // Insert own filepath here
+// Insert own filepath here
+#include "C:\Users\Taylor\Documents\Arduino\libraries\ChassisData.h"
 
 #ifndef I2C_ADDRESS
 #define I2C_ADDRESS  1
@@ -23,6 +24,10 @@ unsigned long timeLastPacket;
 Servo leftMotor, rightMotor;
 
 ChassisData data;
+boolean dataValid;
+
+void I2CReceive(int count);
+boolean readBytes(void* dest, size_t len);
 
 void setup() {
   // Attach the motors and set their starting speed to neutral/zero speed
@@ -36,10 +41,15 @@ void setup() {
   Wire.onReceive(I2CReceive); 
   Serial.begin(115200);
   timeLastPacket = 0;
+  dataValid = false;
 }
 
 void loop() {
-  if(millis() - timeLastPacket < TIMEOUT) {
+  static boolean timedOut = false;
+  
+  if(millis() - timeLastPacket < TIMEOUT && dataValid) {
+    timedOut = false; 
+    
     // Map values from 5-bit char to int from full reverse to full forwards
     int leftSpeed = map(data.left_motor, 0, 32, MIN_FREQUENCY, MAX_FREQUENCY);
     int rightSpeed = map(data.right_motor, 0, 32, MIN_FREQUENCY, MAX_FREQUENCY);
@@ -55,7 +65,10 @@ void loop() {
     // Timeout handling (stop motors)
     leftMotor.writeMicroseconds(1500);
     rightMotor.writeMicroseconds(1500);
-    Serial.println("TIMEOUT REACHED");
+    if(!timedOut) {
+      timedOut = true;
+      Serial.println("TIMEOUT REACHED");
+    }
   }
 }
 
@@ -67,8 +80,9 @@ void I2CReceive(int count) {
   if(count % NECESSARY_PACKET_SIZE == 0) {
     timeLastPacket = millis();
     
-    for(int i = 0; i < count / NECESSARY_PACKET_SIZE && Wire.available() >= 3; i++) {
+    for(int i = 0; i < count / NECESSARY_PACKET_SIZE && Wire.available() >= NECESSARY_PACKET_SIZE; i++) {
       readBytes(&data, NECESSARY_PACKET_SIZE);
+      dataValid = true;
     }
   }
 }
