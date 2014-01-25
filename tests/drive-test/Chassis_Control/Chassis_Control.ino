@@ -42,6 +42,8 @@ void setup() {
   Serial.begin(115200);
   timeLastPacket = 0;
   dataValid = false;
+  
+  Serial.println("Iniialization complete.");
 }
 
 void loop() {
