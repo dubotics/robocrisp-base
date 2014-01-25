@@ -11,3 +11,12 @@ basic communication and control functionality.
   * `node.cc` implements the client and server functionalities; it was copied from RoboCRISP's
     `tests/live-test.cc` and modified to provide the appropriate interfaces and behaviour for
     our purposes here.
+
+
+The main program, `node`, implements both the client (base) and server (robot)
+functionality.  It can be compiled in a separate directory "build" using the
+following shell commands.  (We'll assume you start out in the `control-test`
+directory.)
+
+    mkdir build && cd build
+    cmake .. && make
