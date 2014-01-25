@@ -384,12 +384,13 @@ main(int argc, char* argv[])
   int port ( strtoul(argv[optind + 1], &tail, 0) );
 
   if ( pec )
-    { fprintf(stderr, "%s: %s (failed to parse IP address).\n", argv[optind], pec.message().c_str());
-      return 1; }
+    fprintf(stderr, "%s: %s (failed to parse IP address).\n", argv[optind], pec.message().c_str());
 
   if ( *tail != '\0' )
-    { fprintf(stderr, "%s: Need integer port number.\n", argv[optind + 1]);
-      return 1; }
+    fprintf(stderr, "%s: Need integer port number.\n", argv[optind + 1]);
+
+  if ( pec || (*tail != '\0') )
+    return 1;
 
   /* Construct the target endpoint (IP address + port number) object. */
   using Protocol = Node::Protocol;
