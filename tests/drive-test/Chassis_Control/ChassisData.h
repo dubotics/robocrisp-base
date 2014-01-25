@@ -27,10 +27,12 @@ extern "C" {
 	unsigned char pid_accept_values : 2;
 
 	/**	Left motor speed */
-	unsigned char left_motor : 5;
+	int8_t left_motor;
 
 	/**	Right motor speed */
-	unsigned char right_motor : 5;
+	int8_t right_motor;
+
+	unsigned char padding : 2;
 
   } ChassisData;
 
