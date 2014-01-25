@@ -18,7 +18,7 @@
 #define TIMEOUT 1000
 #endif
 
-const int TALON_LEFT = 13, TALON_RIGHT = 14, MIN_FREQUENCY = 1002, MAX_FREQUENCY = 2041;
+const int TALON_LEFT = 12, TALON_RIGHT = 13, MIN_FREQUENCY = 1002, MAX_FREQUENCY = 2041;
 unsigned long timeLastPacket;
 
 Servo leftMotor, rightMotor;
