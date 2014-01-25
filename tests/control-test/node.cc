@@ -91,7 +91,7 @@ run_server(boost::asio::io_service& service,
   using namespace crisp::comms::keywords;
 
   /* Declare our interface configuration. */
-  server.configuration.add_module( "LED", 2)
+  server.configuration.add_module( "LED", 3)
     .add_input<uint8_t>({ "red",   { _neutral = 0, _minimum = 0, _maximum = 255 } })
     .add_input<uint8_t>({ "green", { _neutral = 0, _minimum = 0, _maximum = 255 } })
     .add_input<uint8_t>({ "blue",  { _neutral = 0, _minimum = 0, _maximum = 255 } });
