@@ -10,8 +10,9 @@
 #define I2C_ADDRESS  1
 #endif
 
+//Packet size of ChassisData object in bytes
 #ifndef NECESSARY_PACKET_SIZE
-#define NECESSARY_PACKET_SIZE  32 //Packet size of ChassisData object in bytes
+#define NECESSARY_PACKET_SIZE  sizeof(ChassisData)
 #endif
 
 #ifndef TIMEOUT
