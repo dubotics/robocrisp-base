@@ -18,7 +18,7 @@
 #define TIMEOUT 1000
 #endif
 
-const int TALON_LEFT = 12, TALON_RIGHT = 13, MIN_FREQUENCY = 1002, MAX_FREQUENCY = 2041;
+const int TALON_LEFT = 8, TALON_RIGHT = 9, MIN_FREQUENCY = 1001, NEUTRAL_FREQUENCY = 1500, MAX_FREQUENCY = 2041;
 unsigned long timeLastPacket;
 
 Servo leftMotor, rightMotor;
@@ -33,8 +33,8 @@ void setup() {
   // Attach the motors and set their starting speed to neutral/zero speed
   leftMotor.attach(TALON_LEFT);
   rightMotor.attach(TALON_RIGHT);
-  leftMotor.writeMicroseconds(1500);
-  rightMotor.writeMicroseconds(1500);
+  leftMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
+  rightMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
   
   // Initialize the I2C Connections and specify the event listener I2CReceive
   Wire.begin(I2C_ADDRESS);
@@ -65,8 +65,8 @@ void loop() {
     Serial.println(rightSpeed);
   } else {
     // Timeout handling (stop motors)
-    leftMotor.writeMicroseconds(1500);
-    rightMotor.writeMicroseconds(1500);
+    leftMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
+    rightMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
     if(!timedOut) {
       timedOut = true;
       Serial.println("TIMEOUT REACHED");
