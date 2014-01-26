@@ -47,25 +47,6 @@ typedef BasicNode<boost::asio::ip::tcp> Node;
 typedef typename Node::Protocol Protocol;
 typedef typename Protocol::endpoint Endpoint;
 
-/** Pretty-print (using ANSI terminal codes) the red, green, and blue values in
- * a ModuleControl object to a file.
- *
- * @param fp File-pointer to print the values to.
- *
- * @param mc ModuleControl instance to fetch values from.
- */
-static void
-print_rgb(FILE* fp, const ModuleControl& mc)
-{
-  const crisp::comms::DataValue<>* dv ( nullptr );
-  if ( (dv = mc.value_for("red")) != nullptr )
-    fprintf(fp, " \033[1;31m%d\033[0m", dv->get<uint8_t>());
-  if ( (dv = mc.value_for("green")) != nullptr )
-    fprintf(fp, " \033[1;32m%d\033[0m", dv->get<uint8_t>());
-  if ( (dv = mc.value_for("blue")) != nullptr )
-    fprintf(fp, " \033[1;34m%d\033[0m", dv->get<uint8_t>());
-}
-
 #include "gnublin_i2c.hpp"
 
 static int
@@ -100,9 +81,7 @@ run_server(boost::asio::io_service& service,
   server.dispatcher.module_control.received.connect(
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
-      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
-      print_rgb(stderr, mc);
-      fputc('\n', stderr);
+      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m\n", THREAD_ID);
 
       const crisp::comms::DataValue<>* dv ( nullptr );
       
