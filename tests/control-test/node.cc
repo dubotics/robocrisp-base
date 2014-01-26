@@ -91,13 +91,15 @@ run_server(boost::asio::io_service& service,
   using namespace crisp::comms::keywords;
 
   /* Declare our interface configuration. */
-  server.configuration.add_module( "LED", 2)
+  server.configuration.add_module( "LED", 3)
     .add_input<uint8_t>({ "red",   { _neutral = 0, _minimum = 0, _maximum = 255 } })
     .add_input<uint8_t>({ "green", { _neutral = 0, _minimum = 0, _maximum = 255 } })
     .add_input<uint8_t>({ "blue",  { _neutral = 0, _minimum = 0, _maximum = 255 } });
 
-  /* Override the handler run when we receive a module-control packet. */
-  server.dispatcher.module_control.received =
+  /* Disconnect the default "module-control received" handler, and connect our
+     own. */
+  server.dispatcher.module_control.received.clear();
+  server.dispatcher.module_control.received.connect(
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
       fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
@@ -124,7 +126,7 @@ run_server(boost::asio::io_service& service,
           perror("write");
           abort();
         }
-    };
+    });
 
   server.run();
   return 0;
@@ -293,7 +295,7 @@ run_client(boost::asio::io_service& service,
 
          - Set up the module-control object to 
       */
-      node.dispatcher.configuration_response.received =
+      node.dispatcher.configuration_response.received.connect(
         [&](Node& _node, const Configuration& configuration)
         {
           node.configuration = configuration;
@@ -310,10 +312,10 @@ run_client(boost::asio::io_service& service,
                                     return;
                                   });
           fprintf(stderr, "done.");
-        };
+        });
 
       /* clear the module-control-sent handler -- it's just a lot of spam. */
-      node.dispatcher.module_control.sent = nullptr;
+      node.dispatcher.module_control.sent.clear();
 
 
       std::atomic<bool> controller_run_flag ( true );
@@ -382,12 +384,13 @@ main(int argc, char* argv[])
   int port ( strtoul(argv[optind + 1], &tail, 0) );
 
   if ( pec )
-    { fprintf(stderr, "%s: %s (failed to parse IP address).\n", argv[optind], pec.message().c_str());
-      return 1; }
+    fprintf(stderr, "%s: %s (failed to parse IP address).\n", argv[optind], pec.message().c_str());
 
   if ( *tail != '\0' )
-    { fprintf(stderr, "%s: Need integer port number.\n", argv[optind + 1]);
-      return 1; }
+    fprintf(stderr, "%s: Need integer port number.\n", argv[optind + 1]);
+
+  if ( pec || (*tail != '\0') )
+    return 1;
 
   /* Construct the target endpoint (IP address + port number) object. */
   using Protocol = Node::Protocol;
