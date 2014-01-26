@@ -30,5 +30,6 @@ Therefore, each of the three client-side programs can be written in whatever pro
 -   Michael Lee (michael0x2a)
 -   Beck Pang (Beck-Sisyphus) let me change again on Linux
 -   Collin J. Sutton (insaneinside)
+-   Taylor Cramer (cramertj)
 -   Kim Lum (kjlum)
 -   David Wong(Netopia)
