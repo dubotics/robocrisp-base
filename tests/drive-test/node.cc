@@ -49,6 +49,9 @@ typedef typename Protocol::endpoint Endpoint;
 
 #include "gnublin_i2c.hpp"
 
+#define I2C_BUS "/dev/i2c-0"
+#define I2C_SLAVE_ADDRESS 5
+
 static int
 run_server(boost::asio::io_service& service,
            const Endpoint& target_endpoint)
@@ -56,19 +59,20 @@ run_server(boost::asio::io_service& service,
 {
   crisp::comms::NodeServer<Node> server ( service, target_endpoint );
 
-  gnublin_i2c i2c ( "/dev/i2c-1", 3 );
+  gnublin_i2c i2c ( I2C_BUS, I2C_SLAVE_ADDRESS );
 
   /* I don't trust this "Gnublin" code (it's terribly written and I had to fix
      it to even get it to compile).   We'll be replacing it eventually. */
-  i2c.setDevicefile("/dev/i2c-1");
-  i2c.setAddress(1);
+  i2c.setDevicefile(I2C_BUS);
+  i2c.setAddress(I2C_SLAVE_ADDRESS);
 
   if ( i2c.fail() )             /* Won't happen because the Gnublin stuff opens
                                    the device on-demand.  /Le sigh.../ */
     return 1;
 
   ChassisData data;
-  memset(data, 0, sizeof(data));
+  unsigned char* data_pointer = reinterpret_cast<unsigned char*>(&data);
+  memset(data_pointer, 0, sizeof(data));
 
   using namespace crisp::comms::keywords;
 
@@ -94,7 +98,7 @@ run_server(boost::asio::io_service& service,
 
       /* This call here is just so EW EW EW EW EW.  There's a reason for it, of
          course, but that reason is irrelevant with the way we're using I2C. */
-      i2c.send(&data, sizeof(data));
+      i2c.send(data_pointer, sizeof(data));
 
       if ( i2c.fail() )
         {
