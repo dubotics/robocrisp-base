@@ -226,7 +226,7 @@ run_client(boost::asio::io_service& service,
 
          - Set up the module-control object to 
       */
-      node.dispatcher.configuration_response.received =
+      node.dispatcher.configuration_response.received.connect(
         [&](Node& _node, const Configuration& configuration)
         {
           node.configuration = configuration;
@@ -243,10 +243,10 @@ run_client(boost::asio::io_service& service,
                                     return;
                                   });
           fprintf(stderr, "done.");
-        };
+        });
 
       /* clear the module-control-sent handler -- it's just a lot of spam. */
-      node.dispatcher.module_control.sent = nullptr;
+      node.dispatcher.module_control.sent.clear();
 
 
       std::atomic<bool> controller_run_flag ( true );
