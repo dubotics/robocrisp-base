@@ -31,3 +31,4 @@ endif("${CMAKE_CXX_COMPILER}" MATCHES "clang\\+\\+")
 
 
 add_subdirectory("tests/control-test")
+add_subdirectory("tests/drive-test")
