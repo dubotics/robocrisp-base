@@ -7,7 +7,7 @@
 #include "C:\Users\Taylor\Documents\Arduino\libraries\ChassisData.h"
 
 #ifndef I2C_ADDRESS
-#define I2C_ADDRESS  1
+#define I2C_ADDRESS  5
 #endif
 
 //Packet size of ChassisData object in bytes
