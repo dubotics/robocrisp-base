@@ -178,6 +178,7 @@ run_client(boost::asio::io_service& service,
       */
       std::mutex mutex;
       ModuleControl mc;
+      bool have_config ( false );
       float left, right;
 
       /* Create the input device. */
@@ -204,15 +205,21 @@ run_client(boost::asio::io_service& service,
       /* Add event handlers for each of the axes we're interested in. */
       controller.axes[1].hook([&](const Axis& axis, Axis::State state)
                               {
-                                std::unique_lock<std::mutex> lock ( mutex );
-                                left = state.value;
-                                update_control(mc, left, right);
+                                if ( have_config )
+                                  {
+                                    std::unique_lock<std::mutex> lock ( mutex );
+                                    left = state.value;
+                                    update_control(mc, left, right);
+                                  }
                               });
       controller.axes[3].hook([&](const Axis& axis, Axis::State state)
                               {
-                                std::unique_lock<std::mutex> lock ( mutex );
-                                right = state.value;
-                                update_control(mc, left, right);
+                                if ( have_config )
+                                  {
+                                    std::unique_lock<std::mutex> lock ( mutex );
+                                    right = state.value;
+                                    update_control(mc, left, right);
+                                  }
                               });
 
 
@@ -233,6 +240,7 @@ run_client(boost::asio::io_service& service,
       node.dispatcher.configuration_response.received.connect(
         [&](Node& _node, const Configuration& configuration)
         {
+          have_config = true;
           node.configuration = configuration;
           mc.reset(&(node.configuration.modules[0]));
 
