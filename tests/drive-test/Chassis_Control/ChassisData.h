@@ -2,8 +2,11 @@
  *
  * Defines the structure that holds control information for the chassis.
  */
-#ifndef ChassisData.h
+#ifndef ChassisData_h
 #define ChassisData_h 1
+
+#include <stdint.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

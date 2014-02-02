@@ -47,26 +47,10 @@ typedef BasicNode<boost::asio::ip::tcp> Node;
 typedef typename Node::Protocol Protocol;
 typedef typename Protocol::endpoint Endpoint;
 
-/** Pretty-print (using ANSI terminal codes) the red, green, and blue values in
- * a ModuleControl object to a file.
- *
- * @param fp File-pointer to print the values to.
- *
- * @param mc ModuleControl instance to fetch values from.
- */
-static void
-print_rgb(FILE* fp, const ModuleControl& mc)
-{
-  const crisp::comms::DataValue<>* dv ( nullptr );
-  if ( (dv = mc.value_for("red")) != nullptr )
-    fprintf(fp, " \033[1;31m%d\033[0m", dv->get<uint8_t>());
-  if ( (dv = mc.value_for("green")) != nullptr )
-    fprintf(fp, " \033[1;32m%d\033[0m", dv->get<uint8_t>());
-  if ( (dv = mc.value_for("blue")) != nullptr )
-    fprintf(fp, " \033[1;34m%d\033[0m", dv->get<uint8_t>());
-}
-
 #include "gnublin_i2c.hpp"
+
+#define I2C_BUS "/dev/i2c-0"
+#define I2C_SLAVE_ADDRESS 5
 
 static int
 run_server(boost::asio::io_service& service,
@@ -75,19 +59,20 @@ run_server(boost::asio::io_service& service,
 {
   crisp::comms::NodeServer<Node> server ( service, target_endpoint );
 
-  gnublin_i2c i2c ( "/dev/i2c-1", 3 );
+  gnublin_i2c i2c ( I2C_BUS, I2C_SLAVE_ADDRESS );
 
   /* I don't trust this "Gnublin" code (it's terribly written and I had to fix
      it to even get it to compile).   We'll be replacing it eventually. */
-  i2c.setDevicefile("/dev/i2c-1");
-  i2c.setAddress(1);
+  i2c.setDevicefile(I2C_BUS);
+  i2c.setAddress(I2C_SLAVE_ADDRESS);
 
   if ( i2c.fail() )             /* Won't happen because the Gnublin stuff opens
                                    the device on-demand.  /Le sigh.../ */
     return 1;
 
   ChassisData data;
-  memset(data, 0, sizeof(data));
+  unsigned char* data_pointer = reinterpret_cast<unsigned char*>(&data);
+  memset(data_pointer, 0, sizeof(data));
 
   using namespace crisp::comms::keywords;
 
@@ -100,9 +85,7 @@ run_server(boost::asio::io_service& service,
   server.dispatcher.module_control.received.connect(
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
-      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
-      print_rgb(stderr, mc);
-      fputc('\n', stderr);
+      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m\n", THREAD_ID);
 
       const crisp::comms::DataValue<>* dv ( nullptr );
       
@@ -115,7 +98,7 @@ run_server(boost::asio::io_service& service,
 
       /* This call here is just so EW EW EW EW EW.  There's a reason for it, of
          course, but that reason is irrelevant with the way we're using I2C. */
-      i2c.send(&data, sizeof(data));
+      i2c.send(data_pointer, sizeof(data));
 
       if ( i2c.fail() )
         {
@@ -195,6 +178,7 @@ run_client(boost::asio::io_service& service,
       */
       std::mutex mutex;
       ModuleControl mc;
+      bool have_config ( false );
       float left, right;
 
       /* Create the input device. */
@@ -221,15 +205,21 @@ run_client(boost::asio::io_service& service,
       /* Add event handlers for each of the axes we're interested in. */
       controller.axes[1].hook([&](const Axis& axis, Axis::State state)
                               {
-                                std::unique_lock<std::mutex> lock ( mutex );
-                                left = state.value;
-                                update_control(mc, left, right);
+                                if ( have_config )
+                                  {
+                                    std::unique_lock<std::mutex> lock ( mutex );
+                                    left = state.value;
+                                    update_control(mc, left, right);
+                                  }
                               });
       controller.axes[3].hook([&](const Axis& axis, Axis::State state)
                               {
-                                std::unique_lock<std::mutex> lock ( mutex );
-                                right = state.value;
-                                update_control(mc, left, right);
+                                if ( have_config )
+                                  {
+                                    std::unique_lock<std::mutex> lock ( mutex );
+                                    right = state.value;
+                                    update_control(mc, left, right);
+                                  }
                               });
 
 
@@ -247,9 +237,10 @@ run_client(boost::asio::io_service& service,
 
          - Set up the module-control object to 
       */
-      node.dispatcher.configuration_response.received =
+      node.dispatcher.configuration_response.received.connect(
         [&](Node& _node, const Configuration& configuration)
         {
+          have_config = true;
           node.configuration = configuration;
           mc.reset(&(node.configuration.modules[0]));
 
@@ -264,10 +255,10 @@ run_client(boost::asio::io_service& service,
                                     return;
                                   });
           fprintf(stderr, "done.");
-        };
+        });
 
       /* clear the module-control-sent handler -- it's just a lot of spam. */
-      node.dispatcher.module_control.sent = nullptr;
+      node.dispatcher.module_control.sent.clear();
 
 
       std::atomic<bool> controller_run_flag ( true );
