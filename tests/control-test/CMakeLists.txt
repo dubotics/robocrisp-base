@@ -1,2 +1,2 @@
-add_executable(node node.cc gnublin_i2c.cpp)
-target_link_libraries(node crisp-comms crisp-input)
+add_executable(control-test node.cc gnublin_i2c.cpp)
+target_link_libraries(control-test crisp-comms crisp-input)
