@@ -1,0 +1,23 @@
+---
+uuid: 'db8510e5-82f2-e9e8-b4e0-f79e52ef1d69'
+binary: '../../build/tests/drive-test/drive-test'
+modes:
+  server:
+    parameters:
+      - server-address:
+          type: 'ip-address'
+          subtype: 'server'
+      - server-port:
+          type: 'ip-port'
+  client:
+    parameters:
+      - server-address:
+          type: 'ip-address'
+          subtype: 'matched'
+      - server-port:
+          type: 'ip-port'
+          subtype: 'matched'
+      - input-device:
+          type: 'device-file'
+          subtype: 'input-evdev'
+    parameter-match: 'server'

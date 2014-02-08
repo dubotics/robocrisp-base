@@ -1,0 +1,7 @@
+---
+# Use these transports for bootstrap-service advertisement and device discovery.
+transports: [ 'bluetooth' ]
+programs:
+  # We can either specify a program definition directly, or give a path to a
+  # YAML file that contains the entry's configuration subtree.
+  drive-test: 'tests/drive-test/drive-test.yaml'
