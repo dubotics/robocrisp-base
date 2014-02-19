@@ -130,7 +130,6 @@ run_server(boost::asio::io_service& service,
       if ( i2c.fail() )
         {
           perror("write");
-          abort();
         }
     });
 
