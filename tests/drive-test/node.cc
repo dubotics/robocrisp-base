@@ -1,19 +1,20 @@
 /** @file
  *
- * Client/server program for the basic controls test.
- *
- * Herein we implement a simple control system for an RGB LED connected to an
- * Arduino (running the sketch in rgb-led/rgb-led.ino, q.v.) attached to a
- * Raspberry Pi via I2C.  The client (master) sends control messages (consisting
- * of red, green, and blue channel data) to the server (slave) at a fixed rate.
+ * Client/server program for the drive test.
  */
 #include <cstdio>
 #include "Chassis_Control/ChassisData.h"
 
+/* Manually disable client mode on ARM machines (e.g. the Raspberry Pi, which
+   gives us enough grief anyway... */
+#if defined(__arm__) && ! defined(DISABLE_CLIENT)
+# define DISABLE_CLIENT 1
+#endif
+
 /* ****************************************************************
  * Help text stuff.
  */
-#if ! defined(__arm__)
+#if ! defined(DISABLE_CLIENT)
 #  define PRINT_USAGE(stream) fprintf(stream, "Usage: %s [OPTION]... ADDRESS PORT [EVDEV]\n", argv[0])
 
 #  define HELP_TEXT "\
@@ -32,7 +33,7 @@ Simple controls-test program: server-only build.\n\
 Options:\n\
   -h	Show this help.\n\
 \n"
-#endif  /* ! defined(__arm__) */
+#endif  /* ! defined(DISABLE_CLIENT) */
 /* **************************************************************** */
 
 #include <boost/asio/connect.hpp>
@@ -121,7 +122,7 @@ run_server(boost::asio::io_service& service,
    We don't need to support client mode on the Pi, so we might as well keep it
    disabled anyway.
  */
-#if ! defined(__arm__)
+#if ! defined(DISABLE_CLIENT)
 
 #include <crisp/input/EvDevController.hh>
 #include <float.h>
@@ -290,7 +291,7 @@ run_client(boost::asio::io_service& service,
 
   return 0;
 }
-#endif  /* ! defined(__arm__) */
+#endif  /* ! defined(DISABLE_CLIENT) */
 
 int
 main(int argc, char* argv[])
@@ -344,7 +345,7 @@ main(int argc, char* argv[])
      much any network-related function, so we'll create one here.  */
   boost::asio::io_service service;
 
-#if ! defined(__arm__)
+#if ! defined(DISABLE_CLIENT)
   return ( argc - optind < 3 )
     ? run_server(service, target_endpoint)
     : run_client(service, target_endpoint, argv[optind+2]);
