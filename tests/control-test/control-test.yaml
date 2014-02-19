@@ -1,0 +1,25 @@
+---
+uuid: 'a874391e-f142-40ed-9bc5-15180e657447'
+binary: '../../build/tests/control-test/control-test'
+default-mode: 'client'
+modes:
+  server:
+    parameters:
+      - server-address:
+          type: 'ip-address'
+          subtype: 'server'
+      - server-port:
+          type: 'ip-port'
+          default: 3000
+  client:
+    parameters:
+      - server-address:
+          type: 'ip-address'
+          subtype: 'matched'
+      - server-port:
+          type: 'ip-port'
+          subtype: 'matched'
+      - input-device:
+          type: 'device-file'
+          subtype: 'input-evdev'
+    parameter-match: 'server'
