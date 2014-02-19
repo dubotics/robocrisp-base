@@ -249,7 +249,7 @@ run_client(boost::asio::io_service& service,
       */
       std::mutex mutex;
       ModuleControl mc;
-      float x, y;
+      float x = 0, y = 0;
 
       /* Create the input device. */
       using namespace crisp::input;
