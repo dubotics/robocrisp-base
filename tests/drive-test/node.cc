@@ -83,19 +83,30 @@ run_server(boost::asio::io_service& service,
     .add_input<int8_t>({ "right", { _neutral = 0, _minimum = -127, _maximum = 128 } });
 
   /* Override the handler run when we receive a module-control packet. */
+  server.dispatcher.module_control.received.clear();
   server.dispatcher.module_control.received.connect(
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
-      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m\n", THREAD_ID);
+      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
 
-      const crisp::comms::DataValue<>* dv ( nullptr );
+      const crisp::comms::DataValue<> *dvl ( nullptr ), *dvr ( nullptr );
       
       /* Update our input-value array. */
-      if ( (dv = mc.value_for("left")) != nullptr )
-          data.left_motor = dv->get<int8_t>();
-      if ( (dv = mc.value_for("right")) != nullptr )
-          data.right_motor = dv->get<int8_t>();
-      
+      if ( (dvl = mc.value_for("left")) != nullptr )
+        {
+          data.left_motor = dvl->get<int8_t>();
+          fprintf(stderr, "%d", data.left_motor);
+        }
+      dvr = mc.value_for("right");
+
+      if ( dvl && dvr )
+        fputs(", ", stderr);
+
+      if ( dvr )
+        {
+          data.right_motor = dvr->get<int8_t>();
+          fprintf(stderr, "%d\n", data.right_motor);
+        }
 
       /* This call here is just so EW EW EW EW EW.  There's a reason for it, of
          course, but that reason is irrelevant with the way we're using I2C. */
@@ -139,8 +150,6 @@ void
 update_control(crisp::comms::ModuleControl& mc,
                float left, float right)
 {
-  fprintf(stderr, "left %f, right %f:", left, right);
-  
   mc.set<int8_t>("left", static_cast<int8_t>(left * 127));
   mc.set<int8_t>("right", static_cast<int8_t>(right * 127));
 }
