@@ -188,19 +188,21 @@ run_client(boost::asio::io_service& service,
 
       /* Make sure the axes we'll be using are in absolute mode. */
       for ( size_t i ( 0 ); i < 2; ++i )
-        if ( controller.axes[i].type != Axis::Type::ABSOLUTE )
-          {                     /* Set up emulation for the axis. */
-            controller.axes[i].mode = Axis::Type::ABSOLUTE;
+        {
+          controller.axes[i].set_coefficients({1, 0, 0, 0});
+          if ( controller.axes[i].type != Axis::Type::ABSOLUTE )
+            {                     /* Set up emulation for the axis. */
+              controller.axes[i].mode = Axis::Type::ABSOLUTE;
 
-            /* We need to manually initialize the absolute-axis raw-value
-               configuration when an axis isn't actually absolute... */
-            controller.axes[i].raw.minimum =
-              - (controller.axes[i].raw.maximum = 256);
-            controller.axes[i].raw.neutral = 0;
+              /* We need to manually initialize the absolute-axis raw-value
+                 configuration when an axis isn't actually absolute... */
+              controller.axes[i].raw.minimum =
+                - (controller.axes[i].raw.maximum = 256);
+              controller.axes[i].raw.neutral = 0;
 
-            /* set cubic mapping: value = 1 * x^3 + 0 * x^2 + 0 * x + 0.  */
-            controller.axes[i].set_coefficients({1, 0, 0, 0});
-          }
+              /* set cubic mapping: value = 1 * x^3 + 0 * x^2 + 0 * x + 0.  */
+            }
+        }
 
       /* Add event handlers for each of the axes we're interested in. */
       controller.axes[1].hook([&](const Axis& axis, Axis::State state)
