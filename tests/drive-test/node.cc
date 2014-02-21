@@ -220,7 +220,8 @@ run_client(boost::asio::io_service& service,
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
                                     left = state.value;
-                                    update_control(mc, left, right);
+                                    if ( mc.module )
+                                      update_control(mc, left, right);
                                   }
                               });
       controller.axes[3].hook([&](const Axis& axis, Axis::State state)
@@ -229,7 +230,8 @@ run_client(boost::asio::io_service& service,
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
                                     right = state.value;
-                                    update_control(mc, left, right);
+                                    if ( mc.module )
+                                      update_control(mc, left, right);
                                   }
                               });
 
