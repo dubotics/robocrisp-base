@@ -3,7 +3,7 @@
  * Client/server program for the drive test.
  */
 #include <cstdio>
-#include "Chassis_Control/ChassisData.h"
+#include "Chassis_Control/DriveData.h"
 
 /* Manually disable client mode on ARM machines (e.g. the Raspberry Pi, which
    gives us enough grief anyway... */
@@ -71,7 +71,7 @@ run_server(boost::asio::io_service& service,
                                    the device on-demand.  /Le sigh.../ */
     return 1;
 
-  ChassisData data;
+  DriveData data;
   unsigned char* data_pointer = reinterpret_cast<unsigned char*>(&data);
   memset(data_pointer, 0, sizeof(data));
 
