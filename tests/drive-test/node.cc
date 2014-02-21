@@ -219,7 +219,7 @@ run_client(boost::asio::io_service& service,
                                 if ( have_config )
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
-                                    left = state.value;
+                                    left = -state.value;
                                     if ( mc.module )
                                       update_control(mc, left, right);
                                   }
@@ -229,7 +229,7 @@ run_client(boost::asio::io_service& service,
                                 if ( have_config )
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
-                                    right = state.value;
+                                    right = -state.value;
                                     if ( mc.module )
                                       update_control(mc, left, right);
                                   }
