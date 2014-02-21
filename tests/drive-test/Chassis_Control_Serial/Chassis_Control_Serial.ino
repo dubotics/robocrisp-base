@@ -1,7 +1,6 @@
 #include <Servo.h>
 #include <map>
 #include <string>
-#include <Wire.h>
 
 // Insert own filepath here
 #include "C:\Users\Taylor\Documents\Arduino\libraries\ChassisData.h"
@@ -21,20 +20,9 @@ unsigned long timeLastPacket;
 Servo leftMotor, rightMotor;
 
 ChassisData data;
-bool dataValid;
+boolean dataValid;
 
-bool readBytes(void* dest, size_t len)
-{
-  char* charDest = (char*)dest;
-  for(int i = 0; i < len; i++)
-  {
-    if(Wire.available())
-      *(charDest++) = (char)Wire.read();
-    else
-      return false;
-  }
-  return true;
-}
+boolean readBytes(void* dest, size_t len);
 
 void setup()
 {
@@ -44,26 +32,52 @@ void setup()
   leftMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
   rightMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
   
-  Wire.begin(4);
-  
   Serial.begin(115200);
   timeLastPacket = 0;
   dataValid = false;
   
-  Serial.println("Initialization complete.");
+  Serial.println("Iniialization complete.");
 }
 
 void loop()
 {
-  static bool timedOut = false;
+  static boolean timedOut = false;
   static unsigned char fullByte = 255;
   int leftSpeed, rightSpeed;
   
-  while(Wire.available() >= NECESSARY_PACKET_SIZE)
+  while(Serial.available() > NECESSARY_PACKET_SIZE + 1 || (Serial.peek() != fullByte && Serial.available() > 0))
   {
-    dataValid = readBytes(&data, NECESSARY_PACKET_SIZE);
-    Serial.print("DATA RECIEVED: ");
-    Serial.println(dataValid);
+    int8_t i = Serial.read();
+    Serial.print("Trashed: ");
+    Serial.println(i);
+  }
+  
+  if(Serial.available() == /*2*/ NECESSARY_PACKET_SIZE + 1 && Serial.peek() == fullByte)
+  {
+    Serial.read();
+    /*int8_t i = Serial.read();
+    Serial.println(i);*/
+    timedOut = false;
+    Serial.println("Data recieved.");
+    //Serial.readBytes((char*)&data, NECESSARY_PACKET_SIZE);
+    data.left_motor = (int8_t)Serial.read();
+    data.right_motor = (int8_t)Serial.read();
+    timeLastPacket = millis();
+    dataValid = true;
+    
+    Serial.print("LEFT Data: ");
+    Serial.println(data.left_motor);
+    Serial.print("RIGHT Data: ");
+    Serial.println(data.right_motor);
+    
+    // Map values from 5-bit char to int from full reverse to full forwards
+    int leftSpeed = map(data.left_motor, -127, 128, MIN_FREQUENCY, MAX_FREQUENCY);
+    int rightSpeed = map(data.right_motor, -127, 128, MIN_FREQUENCY, MAX_FREQUENCY);
+    
+    Serial.print("LEFT Speed: ");
+    Serial.println(leftSpeed);
+    Serial.print("RIGHT Speed: ");
+    Serial.println(rightSpeed);
   }
   
   if(millis() - timeLastPacket < TIMEOUT && dataValid)
