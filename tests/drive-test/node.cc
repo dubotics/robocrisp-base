@@ -50,8 +50,8 @@ typedef typename Protocol::endpoint Endpoint;
 
 #include "gnublin_i2c.hpp"
 
-#define I2C_BUS "/dev/i2c-0"
-#define I2C_SLAVE_ADDRESS 5
+#define I2C_BUS "/dev/i2c-1"
+#define I2C_SLAVE_ADDRESS 4
 
 static int
 run_server(boost::asio::io_service& service,
