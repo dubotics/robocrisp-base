@@ -78,7 +78,7 @@ run_server(boost::asio::io_service& service,
   using namespace crisp::comms::keywords;
 
   /* Declare our interface configuration. */
-  server.configuration.add_module( "LED", 2)
+  server.configuration.add_module( "drive", 2)
     .add_input<int8_t>({ "left",  { _neutral = 0, _minimum = -127, _maximum = 128 } })
     .add_input<int8_t>({ "right", { _neutral = 0, _minimum = -127, _maximum = 128 } });
 
