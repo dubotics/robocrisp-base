@@ -5,3 +5,11 @@ programs:
   # We can either specify a program definition directly, or give a path to a
   # YAML file that contains the entry's configuration subtree.
   drive-test: 'tests/drive-test/drive-test.yaml'
+  control-test: 'tests/control-test/control-test.yaml'
+  systemctl:
+    binary: '/bin/systemctl'
+    modes:
+      default:
+        parameters:
+          - command:
+              type: 'string'

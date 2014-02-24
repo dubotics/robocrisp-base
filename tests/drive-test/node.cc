@@ -3,7 +3,7 @@
  * Client/server program for the drive test.
  */
 #include <cstdio>
-#include "Chassis_Control/ChassisData.h"
+#include "Chassis_Control/DriveData.h"
 
 /* Manually disable client mode on ARM machines (e.g. the Raspberry Pi, which
    gives us enough grief anyway... */
@@ -50,8 +50,8 @@ typedef typename Protocol::endpoint Endpoint;
 
 #include "gnublin_i2c.hpp"
 
-#define I2C_BUS "/dev/i2c-0"
-#define I2C_SLAVE_ADDRESS 5
+#define I2C_BUS "/dev/i2c-1"
+#define I2C_SLAVE_ADDRESS 4
 
 static int
 run_server(boost::asio::io_service& service,
@@ -71,31 +71,42 @@ run_server(boost::asio::io_service& service,
                                    the device on-demand.  /Le sigh.../ */
     return 1;
 
-  ChassisData data;
+  DriveData data;
   unsigned char* data_pointer = reinterpret_cast<unsigned char*>(&data);
   memset(data_pointer, 0, sizeof(data));
 
   using namespace crisp::comms::keywords;
 
   /* Declare our interface configuration. */
-  server.configuration.add_module( "LED", 2)
+  server.configuration.add_module( "drive", 2)
     .add_input<int8_t>({ "left",  { _neutral = 0, _minimum = -127, _maximum = 128 } })
     .add_input<int8_t>({ "right", { _neutral = 0, _minimum = -127, _maximum = 128 } });
 
   /* Override the handler run when we receive a module-control packet. */
+  server.dispatcher.module_control.received.clear();
   server.dispatcher.module_control.received.connect(
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
-      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m\n", THREAD_ID);
+      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
 
-      const crisp::comms::DataValue<>* dv ( nullptr );
+      const crisp::comms::DataValue<> *dvl ( nullptr ), *dvr ( nullptr );
       
       /* Update our input-value array. */
-      if ( (dv = mc.value_for("left")) != nullptr )
-          data.left_motor = dv->get<int8_t>();
-      if ( (dv = mc.value_for("right")) != nullptr )
-          data.right_motor = dv->get<int8_t>();
-      
+      if ( (dvl = mc.value_for("left")) != nullptr )
+        {
+          data.left_motor = dvl->get<int8_t>();
+          fprintf(stderr, "%d", data.left_motor);
+        }
+      dvr = mc.value_for("right");
+
+      if ( dvl && dvr )
+        fputs(", ", stderr);
+
+      if ( dvr )
+        {
+          data.right_motor = dvr->get<int8_t>();
+          fprintf(stderr, "%d\n", data.right_motor);
+        }
 
       /* This call here is just so EW EW EW EW EW.  There's a reason for it, of
          course, but that reason is irrelevant with the way we're using I2C. */
@@ -104,7 +115,6 @@ run_server(boost::asio::io_service& service,
       if ( i2c.fail() )
         {
           perror("write");
-          abort();
         }
     });
 
@@ -140,8 +150,6 @@ void
 update_control(crisp::comms::ModuleControl& mc,
                float left, float right)
 {
-  fprintf(stderr, "left %f, right %f:", left, right);
-  
   mc.set<int8_t>("left", static_cast<int8_t>(left * 127));
   mc.set<int8_t>("right", static_cast<int8_t>(right * 127));
 }
@@ -189,19 +197,21 @@ run_client(boost::asio::io_service& service,
 
       /* Make sure the axes we'll be using are in absolute mode. */
       for ( size_t i ( 0 ); i < 2; ++i )
-        if ( controller.axes[i].type != Axis::Type::ABSOLUTE )
-          {                     /* Set up emulation for the axis. */
-            controller.axes[i].mode = Axis::Type::ABSOLUTE;
+        {
+          controller.axes[i].set_coefficients({1, 0, 0, 0});
+          if ( controller.axes[i].type != Axis::Type::ABSOLUTE )
+            {                     /* Set up emulation for the axis. */
+              controller.axes[i].mode = Axis::Type::ABSOLUTE;
 
-            /* We need to manually initialize the absolute-axis raw-value
-               configuration when an axis isn't actually absolute... */
-            controller.axes[i].raw.minimum =
-              - (controller.axes[i].raw.maximum = 256);
-            controller.axes[i].raw.neutral = 0;
+              /* We need to manually initialize the absolute-axis raw-value
+                 configuration when an axis isn't actually absolute... */
+              controller.axes[i].raw.minimum =
+                - (controller.axes[i].raw.maximum = 256);
+              controller.axes[i].raw.neutral = 0;
 
-            /* set cubic mapping: value = 1 * x^3 + 0 * x^2 + 0 * x + 0.  */
-            controller.axes[i].set_coefficients({1, 0, 0, 0});
-          }
+              /* set cubic mapping: value = 1 * x^3 + 0 * x^2 + 0 * x + 0.  */
+            }
+        }
 
       /* Add event handlers for each of the axes we're interested in. */
       controller.axes[1].hook([&](const Axis& axis, Axis::State state)
@@ -209,8 +219,9 @@ run_client(boost::asio::io_service& service,
                                 if ( have_config )
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
-                                    left = state.value;
-                                    update_control(mc, left, right);
+                                    left = -state.value;
+                                    if ( mc.module )
+                                      update_control(mc, left, right);
                                   }
                               });
       controller.axes[3].hook([&](const Axis& axis, Axis::State state)
@@ -218,8 +229,9 @@ run_client(boost::asio::io_service& service,
                                 if ( have_config )
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
-                                    right = state.value;
-                                    update_control(mc, left, right);
+                                    right = -state.value;
+                                    if ( mc.module )
+                                      update_control(mc, left, right);
                                   }
                               });
 

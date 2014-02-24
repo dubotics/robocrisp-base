@@ -84,15 +84,11 @@ update(uint8_t* values)
 #define HUE_INCREMENT (I_PI/32)
 
 
-/* Note that the next two values are marked "volatile" because they can be
-   changed from within an interrupt service routine.  `volatile` basically
-   forces the compiler to disable optimizations that make assumptions based on
-   what the variable was last set to within a given scope. */
 /** Value of `millis()` at which we last received an I2C transmission. */
-static volatile size_t last_receive;
+static size_t last_receive;
 
 /** Input values. */
-static volatile uint8_t inputs[3];
+static uint8_t inputs[3];
 
 /** Hue-angle counter for idle mode. */
 static uint16_t theta;

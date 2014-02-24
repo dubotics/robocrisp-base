@@ -1,6 +1,6 @@
 ---
-uuid: 'db8510e5-82f2-e9e8-b4e0-f79e52ef1d69'
-binary: '../../build/tests/drive-test/drive-test'
+uuid: 'a874391e-f142-40ed-9bc5-15180e657447'
+binary: '../../build/tests/control-test/control-test'
 default-mode: 'client'
 modes:
   server:

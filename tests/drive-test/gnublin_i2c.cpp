@@ -401,10 +401,11 @@ int gnublin_i2c::send(unsigned char *TxBuf, int length){
 
 	error_flag=false;	
 
-	if(write(fd, TxBuf, length) != length)
-		return errorMsg("i2c write error!\n");
+        int r;
+	if( ( r = write(fd, TxBuf, length)) != length)
+          return errorMsg("i2c write error!\n");
 
-	return 1;
+	return r;
 }
 
 //----------------------------------send----------------------------------
@@ -461,10 +462,11 @@ int gnublin_i2c::send(unsigned char RegisterAddress, unsigned char *TxBuf, int l
 /*	if (send(RegisterAddress) == -1)
 		return -1;
 */
-	if(write(fd, data, length+1) != length+1)
+        int r;
+	if((r = write(fd, data, length+1)) != length+1)
 		return errorMsg("i2c write error!\n");
 
-	return 1;
+	return r;
 }
 
 //----------------------------------send----------------------------------
@@ -496,10 +498,11 @@ int gnublin_i2c::send(unsigned char value){
 
 	error_flag=false;
 
-	if(write(fd, &value, 1) != 1)
+        int r;
+	if((r = write(fd, &value, 1)) != 1)
 		return errorMsg("i2c write error!\n");
 
-	return 1;
+	return r;
 }
 
 

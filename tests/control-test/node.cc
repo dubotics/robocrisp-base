@@ -130,7 +130,6 @@ run_server(boost::asio::io_service& service,
       if ( i2c.fail() )
         {
           perror("write");
-          abort();
         }
     });
 
@@ -249,7 +248,7 @@ run_client(boost::asio::io_service& service,
       */
       std::mutex mutex;
       ModuleControl mc;
-      float x, y;
+      float x = 0, y = 0;
 
       /* Create the input device. */
       using namespace crisp::input;
@@ -277,13 +276,15 @@ run_client(boost::asio::io_service& service,
                               {
                                 std::unique_lock<std::mutex> lock ( mutex );
                                 x = state.value;
-                                update_control(mc, x, y);
+                                if ( mc.module )
+                                  update_control(mc, x, y);
                               });
       controller.axes[1].hook([&](const Axis& axis, Axis::State state)
                               {
                                 std::unique_lock<std::mutex> lock ( mutex );
                                 y = state.value;
-                                update_control(mc, x, y);
+                                if ( mc.module )
+                                  update_control(mc, x, y);
                               });
 
 
@@ -311,7 +312,7 @@ run_client(boost::asio::io_service& service,
 
           /* Set up the control packet to be sent at 25 Hz. */
           fprintf(stderr, "Setting up send action... ");
-          node.scheduler.schedule(10_Hz,
+          node.scheduler.schedule(25_Hz,
                                   [&](crisp::util::PeriodicAction&) {
                                     std::unique_lock<std::mutex> lock ( mutex );
                                     node.send(mc);
