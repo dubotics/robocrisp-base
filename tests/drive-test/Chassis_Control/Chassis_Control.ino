@@ -4,11 +4,11 @@
 #include <Wire.h>
 
 // Insert own filepath here
-#include "C:\Users\Taylor\Documents\Arduino\libraries\ChassisData.h"
+#include "C:\Users\Taylor\Documents\Arduino\libraries\DriveData.h"
 
-//Packet size of ChassisData object in bytes
+//Packet size of DriveData object in bytes
 #ifndef NECESSARY_PACKET_SIZE
-#define NECESSARY_PACKET_SIZE  sizeof(ChassisData)
+#define NECESSARY_PACKET_SIZE  sizeof(DriveData)
 #endif
 
 #ifndef TIMEOUT
@@ -20,20 +20,40 @@ unsigned long timeLastPacket;
 
 Servo leftMotor, rightMotor;
 
-ChassisData data;
-bool dataValid;
+DriveData data = { 0 };
+static char strbuf[128];
 
-bool readBytes(void* dest, size_t len)
+inline void readBytes(void* dest, size_t len)
 {
-  char* charDest = (char*)dest;
-  for(int i = 0; i < len; i++)
+  for(char* charDest = (char*)dest; len > 0 && Wire.available(); --len, ++charDest )
   {
-    if(Wire.available())
-      *(charDest++) = (char)Wire.read();
-    else
-      return false;
+    *charDest = Wire.read();
+    char buf[4];
+    //snprintf(buf, 4, "%02X ", *charDest);
+    //Serial.print(buf);
   }
-  return true;
+  //Serial.println();
+}
+
+void i2cHandler(int numBytes)
+{
+  while(Wire.available() >= NECESSARY_PACKET_SIZE)
+  {
+    //snprintf(strbuf, sizeof(strbuf), "DATA RECEIVED (%d): ", numBytes);
+    //Serial.print(strbuf);
+    readBytes(&data, sizeof(data));
+    if(numBytes >= NECESSARY_PACKET_SIZE)
+      timeLastPacket = millis();
+    /*Serial.println("Left: ");
+    Serial.println(data.left_motor);
+    Serial.println("Right: ");
+    Serial.println(data.right_motor);*/
+  }
+  /*while(Wire.available() > 0)
+  {
+    snprintf(strbuf, sizeof(strbuf), "Trash: %02X\n", Wire.read());
+    Serial.print(strbuf);
+  }*/
 }
 
 void setup()
@@ -45,10 +65,10 @@ void setup()
   rightMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
   
   Wire.begin(4);
+  Wire.onReceive(i2cHandler);
   
   Serial.begin(115200);
   timeLastPacket = 0;
-  dataValid = false;
   
   Serial.println("Initialization complete.");
 }
@@ -56,21 +76,19 @@ void setup()
 void loop()
 {
   static bool timedOut = false;
-  static unsigned char fullByte = 255;
   int leftSpeed, rightSpeed;
   
-  while(Wire.available() >= NECESSARY_PACKET_SIZE)
-  {
-    dataValid = readBytes(&data, NECESSARY_PACKET_SIZE);
-    Serial.print("DATA RECIEVED: ");
-    Serial.println(dataValid);
-  }
+  leftSpeed = map(data.left_motor, -127, 128, MIN_FREQUENCY, MAX_FREQUENCY);
+  rightSpeed = map(data.right_motor, -127, 128, MIN_FREQUENCY, MAX_FREQUENCY);
   
-  if(millis() - timeLastPacket < TIMEOUT && dataValid)
+  Serial.println(millis() - timeLastPacket);
+  
+  if(millis() - timeLastPacket < TIMEOUT)
   {
     // Set speeds of motors and print
     leftMotor.writeMicroseconds(leftSpeed);
     rightMotor.writeMicroseconds(rightSpeed);
+    timedOut = false;
   }
   else
   {
@@ -82,4 +100,5 @@ void loop()
       Serial.println("TIMEOUT REACHED");
     }
   }
+  delay(3);
 }

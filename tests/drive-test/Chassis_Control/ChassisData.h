@@ -16,7 +16,7 @@ extern "C" {
      structure for memory-alignment purposes, which we don't want because the
      structure needs to have the same layout o nall architectures (e.g., your
      computer [probably 64-bit] and the AVR microcontrollers [8-bit]).  */
-  typedef struct __attribute__ (( packed, align(1) ))
+  typedef struct __attribute__ (( packed ))
   {
 	/**	Whether to speed-control the motors (rather than power control) */
 	unsigned char pid_enabled : 2;
