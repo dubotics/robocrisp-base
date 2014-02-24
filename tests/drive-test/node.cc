@@ -261,7 +261,7 @@ run_client(boost::asio::io_service& service,
 
           /* Set up the control packet to be sent at 25 Hz. */
           fprintf(stderr, "Setting up send action... ");
-          node.scheduler.schedule(10_Hz,
+          node.scheduler.schedule(25_Hz,
                                   [&](crisp::util::PeriodicAction&) {
                                     std::unique_lock<std::mutex> lock ( mutex );
                                     node.send(mc);
