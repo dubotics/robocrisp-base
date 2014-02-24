@@ -274,14 +274,8 @@ run_client(boost::asio::io_service& service,
       node.dispatcher.module_control.sent.clear();
 
 
-      std::atomic<bool> controller_run_flag ( true );
-
       /* On user interrupt (Ctrl+C), shut down the node and stop the
          controller's main loop.
-
-         If the program doesn't stop, wiggle the controller a bit. (Current
-         EvDevController implementation uses a blocking read, so it won't notice
-         that the run flag has changed until it gets another event.)
       */
       boost::asio::signal_set ss ( service, SIGINT );
       ss.async_wait([&](const boost::system::error_code& error, int sig)
@@ -289,7 +283,7 @@ run_client(boost::asio::io_service& service,
                       if ( ! error )
                         {
                           node.halt();
-                          controller_run_flag = false;
+                          controller.stop();
                         }
                     });
 
@@ -297,7 +291,7 @@ run_client(boost::asio::io_service& service,
       node.send(MessageType::CONFIGURATION_QUERY);
 
       /* Start the controller and the network node. */
-      std::thread controller_thread([&]() { controller.run(controller_run_flag); });
+      std::thread controller_thread([&]() { controller.run(); });
       node.run();
     }
 
