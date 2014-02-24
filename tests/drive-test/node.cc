@@ -87,7 +87,10 @@ run_server(boost::asio::io_service& service,
   server.dispatcher.module_control.received.connect(
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
-      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
+      if ( isatty(STDERR_FILENO) )
+        fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
+      else
+        fprintf(stderr, "[0x%0x] Module-control received:", THREAD_ID);
 
       const crisp::comms::DataValue<> *dvl ( nullptr ), *dvr ( nullptr );
       
@@ -272,7 +275,6 @@ run_client(boost::asio::io_service& service,
 
       /* clear the module-control-sent handler -- it's just a lot of spam. */
       node.dispatcher.module_control.sent.clear();
-
 
       /* On user interrupt (Ctrl+C), shut down the node and stop the
          controller's main loop.
