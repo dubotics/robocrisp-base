@@ -58,7 +58,7 @@ run_server(boost::asio::io_service& service,
            const Endpoint& target_endpoint)
 
 {
-  crisp::comms::NodeServer<Node> server ( service, target_endpoint );
+  crisp::comms::NodeServer<Node> server ( service, target_endpoint, 0, 1 );
 
   gnublin_i2c i2c ( I2C_BUS, I2C_SLAVE_ADDRESS );
 
@@ -88,7 +88,7 @@ run_server(boost::asio::io_service& service,
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
       if ( isatty(STDERR_FILENO) )
-        fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
+        fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m: ", THREAD_ID);
       else
         fprintf(stderr, "[0x%0x] Module-control received:", THREAD_ID);
 
@@ -241,7 +241,7 @@ run_client(boost::asio::io_service& service,
 
       /* Instantiate the network node. */
       Node node ( std::move(socket), NodeRole::MASTER );
-
+      node.on_disconnect(std::bind(exit, 1));
       
       /* Override the default configuration-response-recieved handler with
          this:
@@ -284,8 +284,10 @@ run_client(boost::asio::io_service& service,
                     {
                       if ( ! error )
                         {
+                          fprintf(stderr, "Caught SIGINT: shutting down.");
                           node.halt();
                           controller.stop();
+                          fprintf(stderr, "Shutdown complete.");
                         }
                     });
 
@@ -293,8 +295,8 @@ run_client(boost::asio::io_service& service,
       node.send(MessageType::CONFIGURATION_QUERY);
 
       /* Start the controller and the network node. */
-      std::thread controller_thread([&]() { controller.run(); });
-      node.run();
+      node.launch();
+      controller.run();
     }
 
   return 0;
