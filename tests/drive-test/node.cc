@@ -87,7 +87,10 @@ run_server(boost::asio::io_service& service,
   server.dispatcher.module_control.received.connect(
     [&](Node& node, const crisp::comms::ModuleControl& mc)
     {
-      fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
+      if ( isatty(STDERR_FILENO) )
+        fprintf(stderr, "[0x%0x] \033[1;33mModule-control received\033[0m:", THREAD_ID);
+      else
+        fprintf(stderr, "[0x%0x] Module-control received:", THREAD_ID);
 
       const crisp::comms::DataValue<> *dvl ( nullptr ), *dvr ( nullptr );
       
@@ -261,7 +264,7 @@ run_client(boost::asio::io_service& service,
 
           /* Set up the control packet to be sent at 25 Hz. */
           fprintf(stderr, "Setting up send action... ");
-          node.scheduler.schedule(10_Hz,
+          node.scheduler.schedule(25_Hz,
                                   [&](crisp::util::PeriodicAction&) {
                                     std::unique_lock<std::mutex> lock ( mutex );
                                     node.send(mc);
@@ -273,15 +276,8 @@ run_client(boost::asio::io_service& service,
       /* clear the module-control-sent handler -- it's just a lot of spam. */
       node.dispatcher.module_control.sent.clear();
 
-
-      std::atomic<bool> controller_run_flag ( true );
-
       /* On user interrupt (Ctrl+C), shut down the node and stop the
          controller's main loop.
-
-         If the program doesn't stop, wiggle the controller a bit. (Current
-         EvDevController implementation uses a blocking read, so it won't notice
-         that the run flag has changed until it gets another event.)
       */
       boost::asio::signal_set ss ( service, SIGINT );
       ss.async_wait([&](const boost::system::error_code& error, int sig)
@@ -289,7 +285,7 @@ run_client(boost::asio::io_service& service,
                       if ( ! error )
                         {
                           node.halt();
-                          controller_run_flag = false;
+                          controller.stop();
                         }
                     });
 
@@ -297,7 +293,7 @@ run_client(boost::asio::io_service& service,
       node.send(MessageType::CONFIGURATION_QUERY);
 
       /* Start the controller and the network node. */
-      std::thread controller_thread([&]() { controller.run(controller_run_flag); });
+      std::thread controller_thread([&]() { controller.run(); });
       node.run();
     }
 
