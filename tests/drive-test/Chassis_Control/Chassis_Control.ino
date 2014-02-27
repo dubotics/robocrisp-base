@@ -1,6 +1,4 @@
 #include <Servo.h>
-#include <map>
-#include <string>
 #include <Wire.h>
 
 // Insert own filepath here
@@ -70,7 +68,7 @@ void setup()
   Serial.begin(115200);
   timeLastPacket = 0;
   
-  Serial.println("Initialization complete.");
+  //Serial.println("Initialization complete.");
 }
 
 void loop()
@@ -97,7 +95,7 @@ void loop()
     rightMotor.writeMicroseconds(NEUTRAL_FREQUENCY);
     if(!timedOut) {
       timedOut = true;
-      Serial.println("TIMEOUT REACHED");
+      //Serial.println("TIMEOUT REACHED");
     }
   }
   delay(3);
