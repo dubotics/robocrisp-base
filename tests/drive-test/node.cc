@@ -151,10 +151,15 @@ run_server(boost::asio::io_service& service,
  */
 void
 update_control(crisp::comms::ModuleControl& mc,
-               float left, float right)
+               int left, int right)
 {
-  mc.set<int8_t>("left", static_cast<int8_t>(left * 127));
-  mc.set<int8_t>("right", static_cast<int8_t>(right * 127));
+  left = left > SCHAR_MAX ? SCHAR_MAX : left;
+  left = left < SCHAR_MIN ? SCHAR_MIN : left;
+  right = right > SCHAR_MAX ? SCHAR_MAX : right;
+  right = right < SCHAR_MIN ? SCHAR_MIN : right;
+
+  mc.set<int8_t>("left", left);
+  mc.set<int8_t>("right", right);
 }
 
 
@@ -191,7 +196,7 @@ run_client(boost::asio::io_service& service,
       std::mutex mutex;
       ModuleControl mc;
       bool have_config ( false );
-      float left, right;
+      int left, right;
 
       /* Create the input device. */
       using namespace crisp::input;
@@ -201,7 +206,7 @@ run_client(boost::asio::io_service& service,
       /* Make sure the axes we'll be using are in absolute mode. */
       for ( size_t i ( 0 ); i < 2; ++i )
         {
-          controller.axes[i].set_coefficients({1, 0, 0, 0});
+          /* controller.axes[i].set_coefficients({1, 0, 0, 0}); */
           if ( controller.axes[i].type != Axis::Type::ABSOLUTE )
             {                     /* Set up emulation for the axis. */
               controller.axes[i].mode = Axis::Type::ABSOLUTE;
@@ -222,7 +227,7 @@ run_client(boost::asio::io_service& service,
                                 if ( have_config )
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
-                                    left = -state.value;
+                                    left = -state.raw_value + 127;
                                     if ( mc.module )
                                       update_control(mc, left, right);
                                   }
@@ -232,7 +237,7 @@ run_client(boost::asio::io_service& service,
                                 if ( have_config )
                                   {
                                     std::unique_lock<std::mutex> lock ( mutex );
-                                    right = -state.value;
+                                    right = -state.raw_value + 127;
                                     if ( mc.module )
                                       update_control(mc, left, right);
                                   }
