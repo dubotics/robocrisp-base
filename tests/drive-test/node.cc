@@ -196,7 +196,7 @@ run_client(boost::asio::io_service& service,
       std::mutex mutex;
       ModuleControl mc;
       bool have_config ( false );
-      int left, right;
+      int left = 0, right = 0;
 
       /* Create the input device. */
       using namespace crisp::input;
@@ -264,6 +264,7 @@ run_client(boost::asio::io_service& service,
           have_config = true;
           node.configuration = configuration;
           mc.reset(&(node.configuration.modules[0]));
+          update_control(mc, left, right);
 
           using namespace crisp::util::literals;
 
