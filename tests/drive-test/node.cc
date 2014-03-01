@@ -53,6 +53,10 @@ typedef typename Protocol::endpoint Endpoint;
 #define I2C_BUS "/dev/i2c-1"
 #define I2C_SLAVE_ADDRESS 4
 
+/** How many seconds to wait for a client to connect before we give up and quit. */
+#define SERVER_TIMEOUT 5
+
+
 static int
 run_server(boost::asio::io_service& service,
            const Endpoint& target_endpoint)
@@ -121,7 +125,26 @@ run_server(boost::asio::io_service& service,
         }
     });
 
+  crisp::util::Scheduler scheduler ( service );
+  crisp::util::WorkerObject worker ( service, 1 );
+  /* Wait for a connection for the configured amount of time, then exit if no one has connected.
+     This safeguards against CRISP bootstrap instances being unresponsive (because they're busy
+     waiting for the server to exit) after a client has trouble connecting or initializing.  */
+  std::weak_ptr<crisp::util::ScheduledAction>
+    halt_action ( scheduler.set_timer(std::chrono::seconds(SERVER_TIMEOUT),
+                                      [&](crisp::util::ScheduledAction&)
+                                      { fputs("Timeout waiting for client connection; quitting.\n", stderr);
+                                        fflush_unlocked(stderr);
+                                        server.halt(); }) );
+  server.on_connect([&](crisp::comms::NodeServer<Node>&, Node&)
+                    { fputs("Got a connection --- cancelling timeout.\n", stderr);
+
+                      if ( ! halt_action.expired() )
+                        halt_action.lock()->cancel(); });
+  worker.launch();
   server.run();
+  worker.halt();
+
   return 0;
 }
 
