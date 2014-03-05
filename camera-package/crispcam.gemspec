@@ -14,17 +14,11 @@ EOF
                     'lib/crispcam.rb',
                     'lib/crispcam/Source.rb',
                     'lib/crispcam/Sink.rb',
-                    'lib/crispcam/util.rb',
-                    'lib/proxy.rb',
-                    'lib/proxy/Client.rb',
-                    'lib/proxy/Message.rb',
-                    'lib/proxy/MessagePasser.rb',
-                    'lib/proxy/Object.rb',
-                    'lib/proxy/ObjectNode.rb',
-                    'lib/proxy/Server.rb'
+                    'lib/crispcam/util.rb'
                     ]
   s.authors	= ['Collin J. Sutton']
   s.add_runtime_dependency('gstreamer', '~> 2.0', '>= 2.0.2')
+  s.add_runtime_dependency('proxy-rmi', '~> 0.1')
   s.executables << 'crispcam-client' \
   		<< 'crispcam-daemon'
 end  
